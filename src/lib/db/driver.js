@@ -72,9 +72,16 @@ async function initAdapter() {
     state.logged = true;
   }
 
-  const { runMigrationOnce } = await import("./migrate.js");
-  await runMigrationOnce(adapter);
-  return adapter;
+  try {
+    const { runMigrationOnce } = await import("./migrate.js");
+    await runMigrationOnce(adapter);
+    const { initializeRemoteBackup } = await import("./remoteBackup.js");
+    state.remoteBackup = await initializeRemoteBackup(adapter);
+    return adapter;
+  } catch (error) {
+    try { adapter.close(); } catch {}
+    throw error;
+  }
 }
 
 export async function getAdapter() {
